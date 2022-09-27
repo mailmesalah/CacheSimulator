@@ -1,0 +1,76 @@
+Notes on Cache Simulator
+
+A cache stores data. A cache stores a portion (Tag) of an address. 
+When we say 16KB cache, we mean the cache stores 16KB data.
+
+Tags, indices and offsets are used to search the data. 
+
+Each block has 16-byte, 32-byte or 64-byte data, depending on the
+configuration of a cache. To find a byte WITHIN a block, we use
+"offset" bits. That is why the last four bits of an address are used
+as "offset" bits for a 16-byte block.
+
+Blocks are organized in "sets". In a direct mapped cache, each set has
+one block. In a two-way set associative cache, each set has two
+blocks. Similarly, a four-way set associative cache has four blocks in
+a set.
+
+We use "index" bits to locate a set in a cache. Thus the number of
+sets determines the number of bits for "index". For a 16KB cache with
+16B blocks, if it is direct mapped (one block in a set), it has
+16KB/16B = 1K blocks, also 1K sets. So we have to use 10 bits for
+index. For the same cache size and block size, if it is a two-way set
+associative (two blocks in a set), it has 16KB/16B = 1K blocks, but
+512 sets. So we have to use 9 bits for index.
+
+We use "tag" bits to match a block WITHIN a set. Since a set may have
+one or more blocks, how to make sure it has the block the CPU wants?
+We need to compare the tag bits from the address with the tag bits of
+all the blocks in a set.
+
+Formula for a N-way set associative cache :-
+no. of blocks = cache size (Bytes) / block size (Bytes)
+no. of sets = no. of blocks / N
+offset width = log2(block size)
+index width = log2(no. of sets)
+tag width = 32 - offset width - index width
+
+Replacement policy: 
+
+FIFO (first in first out): You need to update the timestamp of a block
+when it is loaded into cache the first time.
+
+LRU (least recently used): You need to update the timestamp of a block
+every time it is accessed.
+
+
+Implementation:
+
+class block {
+      unsigned long tag
+      unsigned long timestamp
+      char valid
+      update_ts(unsigned long newts){update timestamp}
+      update_tag(unsigned long newtag){update tag}
+      int compare_tag(unsigned long tag){compare tag with my tag, return block id or "miss")
+}
+
+class set {
+      int num_blks
+      block *blk
+      char replacement_policy
+      int access(tag){compare tag with blocks in this set, return block id or "miss"}
+      int find_victim(policy){find a victim block to replace with "policy"}
+}
+
+class cache {
+      unsigned long total_access_counter, hit_count
+      int cache_size
+      int block_size
+      int set_associativity
+      int num_sets
+      set *sets
+      char replacement_policy
+      int access(addr){locate and access a set, return "hit" or "miss"}
+      cache(cache_size, block_size, set_assoc, replacement_policy){constructor of the cache class}
+}
